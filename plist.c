@@ -15,16 +15,15 @@
 
 /* Function prototypes. */
 void exErr(char *msg);
-void slice(char *dest, char *src, int l);
 
 int main(int argc, char *argv[])
 {
     /* Declarations. */
     FILE *f;
-    char name[100], temp[100], num[10], end[5];
+    char name[100], end[5];
     char *start[] = {"Congleton ", "Biddulph ", "Sandbach ", "Alsager "};
     char *eds = "CBSA", *ext = ".jpg", *ptr;
-    int i, k, y;
+    int k, y;
 
     /* Open the file for writing */
     f = fopen("plist.txt", "w");
@@ -45,54 +44,44 @@ int main(int argc, char *argv[])
 
     while ((drecord = readdir(dhandle)) != NULL)
     {
-        /* Make sure strings are empty. */
-        temp[0] = '\0';
-        num[0]  = '\0';
+		/* Copy filename into name. */
         strcpy(name, drecord -> d_name);
         
         /* Only look at the right type of file (check length and extension). */
         if((k = strlen(name) - 4) < LEN)
             continue;
-        slice(end, &name[k], 4);
+
+		/* Put final four characters of name in end.*/
+		sprintf(end, "%.4s", &name[k]);
+        /* Check extension is right. */
         if (strcasecmp(ext, end))
             continue;
 
          /* Do archive pics first. */
         if (name[0] >= '0' && name[0] <= '9')
         {
-            slice(num, name, 9);
-            sprintf(temp, "Chronicle Archive photo %s", num);
-            fprintf(f, "%s\n", temp);
+			/* Write new name, using fprintf to slice. */
+            fprintf(f, "Chronicle Archive photo %.9s\n", name);
             continue;
         }
 
     /* Use the first letter of the filename to identify edition. */
+	/* Get a pointer to matching character in eds. */
     ptr = strchr(eds, name[0]);
+	/* Use pointer arithmetic to find the index. */
     k = (int)(ptr - eds);
     if (k < 0 || k > 3)
         continue;
 
-    slice(num, &name[4], 5);
-    fprintf(f, "%sChronicle Photo. %s/%d\n", start[k], num, y);
+	/* Write new name, using fprintf to slice. */
+    fprintf(f, "%sChronicle Photo. %.5s/%d\n", start[k], &name[4], y);
     }
 
     /* Close file and directory. */
     fclose(f);
     closedir(dhandle);
+	return 0;
 }
-
-
-/* Slice: returns a substring. Dest must be big enough.
- * Pass dest, start address in src and length. */
-void slice(char *dest, char *src, int l)
-{
-    int i;
-    for (i = 0; i < l; i++)
-       *dest++ = *src++;
-    *dest = '\0';
-
-}
-
 
 /* Simple error message and quit function. */
 void exErr(char *msg)
@@ -100,5 +89,4 @@ void exErr(char *msg)
     printf("ERROR: %s\n", msg);
     exit(1);
 }
-
 
